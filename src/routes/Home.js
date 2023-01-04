@@ -1,10 +1,35 @@
 import React from "react";
-import { useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
+import { useState, useEffect } from "react";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 import { dbService } from "../fbase";
+
 
 function Home() {
 	const [tweet, setTweet] = useState('');
+	const [tweets, setTweets] = useState([]);
+
+	const getTweets = async () => {
+		/**
+		 * https://firebase.google.com/docs/firestore/query-data/get-data?authuser=1
+		 */
+		const dbTweets = await getDocs(collection(dbService, 'tweets'));
+		dbTweets.forEach((doc) => {
+			/**
+			 * https://velog.io/@kingmo/state-prev
+			 */
+			const tweetObject = {
+				...doc.data(),
+				id: doc.id
+			}
+			setTweets((prev) => [tweetObject, ...prev]);
+		});
+	}
+
+	useEffect(() => {
+		getTweets();
+
+	}, [])
+
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		/**
@@ -27,6 +52,15 @@ function Home() {
 				<input type="text" value={tweet} onChange={onChange} placeholder="What's on your mind?" maxLength={120} />
 				<button type="submit">tweet</button>
 			</form>
+			<div>
+				{
+					tweets.map((tweet) => (
+						<div key={tweet.id}>
+							<h4>{tweet.tweet}</h4>
+						</div>
+					))
+				}
+			</div>
 		</>
 	)
 }
